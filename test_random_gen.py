@@ -96,6 +96,13 @@ class TestRandomGen(unittest.TestCase):
         results = Counter([e_gen.next_num() for _ in range(10000)])
         self.assertAlmostEqual(results[1] / results[2], 1, delta=0.05)
 
-
+    def test_get_decimal_places(self):
+        # Test with various numbers
+        self.assertEqual(RandomGen._get_decimal_places(1.234), 3)
+        self.assertEqual(RandomGen._get_decimal_places(1.2000), 1)
+        self.assertEqual(RandomGen._get_decimal_places(1.0), 0)
+        self.assertEqual(RandomGen._get_decimal_places(1e-5), 5)
+        self.assertEqual(RandomGen._get_decimal_places(1e5), 0)
+        self.assertEqual(RandomGen._get_decimal_places(1.00000000000001), 14)
 if __name__ == "__main__":
     unittest.main()

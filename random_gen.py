@@ -10,6 +10,7 @@ class RandomGen(object):
 
     _cumulative_sums = []
     _lookup_table = {}
+    _max_decimal_places = 0
 
     def __init__(
         self, random_nums: typing.List[int], probabilities: typing.List[float]
@@ -60,7 +61,6 @@ class RandomGen(object):
         # TODO: make this 1 to the most decimal places in the probabilities list
         rand_num = round(rand_num, 1)
         if rand_num in self._lookup_table:
-            print("Took from lookup table")
             return self._lookup_table[rand_num]
         else:
             left, right = 0, len(self._cumulative_sums) - 1
@@ -81,13 +81,21 @@ class RandomGen(object):
         if "." in num_str:
             decimal_part = num_str.split(".")[1]
             # Remove trailing zeros
-            decimal_part.rstrip("0")
+            decimal_part = decimal_part.rstrip("0")
             return len(decimal_part)
+        elif "e" in num_str:
+            # Handle scientific notation (e.g., 1e-5)
+            parts = num_str.split("e")
+            if "-" in parts[1]:
+                # For negative exponent (e.g., 1e-5), the exponent indicates decimal places
+                return int(parts[1][1:])  # Remove the negative sign and convert to int
         else:
             return 0
 
     def next_num(self):
         """
-        Returns one of the randomNums. When this method is called multiple times over a long period, it should return the numbers roughly with the initialized probabilities.
+        Returns one of the randomNums.
+        When this method is called multiple times over a long period, it should return the numbers roughly with
+        the initialized probabilities.
         """
         return self._binary_next()
