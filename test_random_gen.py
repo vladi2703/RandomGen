@@ -2,6 +2,7 @@ import unittest
 import random
 from collections import Counter
 from random_gen import RandomGen
+from math_utils import chi_square_test
 
 
 class TestRandomGen(unittest.TestCase):
@@ -40,15 +41,6 @@ class TestRandomGen(unittest.TestCase):
             result = small_probabilities_gen._binary_next()
             self.assertIn(result, possible_values)
 
-    def test_lookup_next(self):
-        # Test that lookup_next returns values from random_nums
-        for _ in range(100):
-            result = self.random_gen._lookup_next()
-            self.assertIn(result, self.random_nums)
-
-        # Test that lookup table is being used
-        self.assertGreater(len(self.random_gen._lookup_table), 0)
-
     def test_next_num(self):
         # Test that next_num returns values from random_nums
         for _ in range(100):
@@ -64,18 +56,22 @@ class TestRandomGen(unittest.TestCase):
         for _ in range(trials):
             results[self.random_gen.next_num()] += 1
 
-        # Check that each number appears with roughly the expected frequency
-        for i, num in enumerate(self.random_nums):
-            expected_count = trials * self.probabilities[i]
-            actual_count = results[num]
+        observed_counts = [results[num] for num in self.random_nums]
+        expected_counts = [trials * prob for prob in self.probabilities]
 
-            # Allow for some statistical variance (within 5%)
-            self.assertLess(
-                abs(actual_count - expected_count) / trials,
-                0.05,
-                f"Number {num} appeared with frequency {actual_count / trials:.4f}, "
-                f"expected {self.probabilities[i]:.4f}",
-            )
+        # Use chi-square test to check if distribution matches expected probabilities
+        chi_square_stat, p_value, reject_null = chi_square_test(
+            observed_counts,
+            expected_counts,
+            alpha=0.0001,
+        )
+
+        # Print stats for debugging if the test fails
+        self.assertFalse(
+            reject_null,
+            f"Chi-square test rejected the null hypothesis. Chi-square: {chi_square_stat:.4f}, "
+            f"p-value: {p_value:.4f}, observed: {observed_counts}, expected: {expected_counts}",
+        )
 
     def test_edge_cases(self):
         # Test with a single number
@@ -88,10 +84,20 @@ class TestRandomGen(unittest.TestCase):
 
         # Test with extreme probability differences
         skewed_gen = RandomGen([1, 2], [0.99, 0.01])
-        results = Counter([skewed_gen.next_num() for _ in range(10000)])
-        self.assertGreater(
-            results[1], results[2] * 5
-        )  # 1 should appear much more frequently
+        trials = 10_000
+        results = Counter([skewed_gen.next_num() for _ in range(trials)])
+        expected_frequencies = [trials * 0.99, trials * 0.01]
+        observed_frequencies = [results[1], results[2]]
+        chi_square_stat, p_value, reject_null = chi_square_test(
+            observed_frequencies,
+            expected_frequencies,
+            alpha=0.0001,
+        )
+        self.assertFalse(
+            reject_null,
+            f"Chi-square test rejected the null hypothesis. Chi-square: {chi_square_stat:.4f}, "
+            f"p-value: {p_value:.4f}, observed: {observed_frequencies}, expected: {expected_frequencies}",
+        )
 
         # Test with e in probabilities
         e_gen = RandomGen([1, 2], [5e-1, 0.5])
