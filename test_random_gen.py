@@ -32,11 +32,13 @@ class TestRandomGen(unittest.TestCase):
         with self.assertRaises(ValueError):
             RandomGen([1, 2, 3], [0.3, 0.3, 0.3])
 
-    def test_binary_next(self):
-        # Test that binary_next returns values from random_nums
+    def test_only_binary_next(self):
+        possible_values = [1, 2]
+        small_probabilities_gen = RandomGen(possible_values, [1 - (1e-12), 1e-12])
+        # Test that binary_next returns values from possible_values
         for _ in range(100):
-            result = self.random_gen._binary_next()
-            self.assertIn(result, self.random_nums)
+            result = small_probabilities_gen._binary_next()
+            self.assertIn(result, possible_values)
 
     def test_lookup_next(self):
         # Test that lookup_next returns values from random_nums
@@ -56,7 +58,7 @@ class TestRandomGen(unittest.TestCase):
     def test_probability_distribution(self):
         # Test that the distribution matches the expected probabilities
         # Run a large number of trials to ensure statistical significance
-        trials = 100000
+        trials = 100_000
         results = Counter()
 
         for _ in range(trials):
@@ -93,7 +95,7 @@ class TestRandomGen(unittest.TestCase):
 
         # Test with e in probabilities
         e_gen = RandomGen([1, 2], [5e-1, 0.5])
-        results = Counter([e_gen.next_num() for _ in range(10000)])
+        results = Counter([e_gen.next_num() for _ in range(10_000)])
         self.assertAlmostEqual(results[1] / results[2], 1, delta=0.05)
 
     def test_get_decimal_places(self):
@@ -104,5 +106,7 @@ class TestRandomGen(unittest.TestCase):
         self.assertEqual(RandomGen._get_decimal_places(1e-5), 5)
         self.assertEqual(RandomGen._get_decimal_places(1e5), 0)
         self.assertEqual(RandomGen._get_decimal_places(1.00000000000001), 14)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 import random
-import typing
+from typing import List, Optional
 
 
 class RandomGen(object):
@@ -12,9 +12,7 @@ class RandomGen(object):
     _lookup_table = {}
     _max_decimal_places = 0
 
-    def __init__(
-        self, random_nums: typing.List[int], probabilities: typing.List[float]
-    ):
+    def __init__(self, random_nums: List[int], probabilities: List[float]):
         """
         Initializes the random generator with the given random numbers and their probabilities.
         :param random_nums: List of random numbers to be generated.
@@ -27,6 +25,7 @@ class RandomGen(object):
         self._random_nums = random_nums
         self._probabilities = probabilities
 
+        self._lookup_table = {}
         self._cumulative_sums = [0] * len(probabilities)
         self._cumulative_sums[0] = probabilities[0]
         for i in range(1, len(probabilities)):
@@ -35,15 +34,31 @@ class RandomGen(object):
 
             minimal_probability = min(minimal_probability, probabilities[i])
             self._cumulative_sums[i] = self._cumulative_sums[i - 1] + probabilities[i]
-
+            self._max_decimal_places = max(
+                self._max_decimal_places,
+                RandomGen._get_decimal_places(probabilities[i]),
+            )
         if not abs(self._cumulative_sums[-1] - 1) < 1e-6:
             raise ValueError("Probabilities must sum to 1")
 
-    def _binary_next(self) -> int:
+        # TODO: Think of a cleaner way to do this
+        # If the smallest probability is very small, use only binary search -
+        # caching will get too memory intensive 
+        if self._max_decimal_places > 10:
+            self.next_num = self._binary_next
+        else:
+            self.next_num = self._lookup_next
+
+    def _binary_next(self, number_to_find: Optional[float] = None) -> int:
         """
         Returns a random number based on the initialized probabilities using binary search.
+        :param number_to_find: A number to find in the cumulative sums.
         """
-        rand_num = random.random()
+        if number_to_find:
+            rand_num = number_to_find
+        else:
+            rand_num = random.random()
+
         left, right = 0, len(self._cumulative_sums) - 1
         while left < right:
             mid = (left + right) // 2
@@ -56,22 +71,20 @@ class RandomGen(object):
     def _lookup_next(self) -> int:
         """
         Returns a random number based on the initialized probabilities using a lookup table.
+        If the number is not found in the lookup table, it uses binary search to find the number.
         """
         rand_num = random.random()
-        # TODO: make this 1 to the most decimal places in the probabilities list
-        rand_num = round(rand_num, 1)
-        if rand_num in self._lookup_table:
-            return self._lookup_table[rand_num]
+        rand_num = round(rand_num, self._max_decimal_places + 1)
+
+        # Convert to string for lookup
+        rand_key = str(rand_num)
+
+        if rand_key in self._lookup_table:
+            return self._lookup_table[rand_key]
         else:
-            left, right = 0, len(self._cumulative_sums) - 1
-            while left < right:
-                mid = (left + right) // 2
-                if self._cumulative_sums[mid] < rand_num:
-                    left = mid + 1
-                else:
-                    right = mid
-            self._lookup_table[rand_num] = self._random_nums[left]
-            return self._random_nums[left]
+            res = self._binary_next(rand_num)
+            self._lookup_table[rand_key] = res
+            return res
 
     def _get_decimal_places(num: float) -> int:
         """
@@ -98,4 +111,4 @@ class RandomGen(object):
         When this method is called multiple times over a long period, it should return the numbers roughly with
         the initialized probabilities.
         """
-        return self._binary_next()
+        pass
