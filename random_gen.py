@@ -11,14 +11,20 @@ class RandomGen(object):
     _cumulative_sums = []
     _lookup_table = {}
     _max_decimal_places = 0
+    _number_generator = None
 
     def __init__(self, random_nums: List[int], probabilities: List[float]):
         """
         Initializes the random generator with the given random numbers and their probabilities.
         :param random_nums: List of random numbers to be generated.
         :param probabilities: List of probabilities corresponding to each random number.
+
+        Raises:
+            ValueError: If the lengths of random_nums and probabilities do not match,
+            or if any probability is not between 0 and 1,
+            or if the probabilities do not sum to 1.
         """
-        if len(random_nums) != len(probabilities):
+        if len(random_nums) != len(probabilities) or len(random_nums) <= 0:
             raise ValueError("random_nums and probabilities must have the same length")
         minimal_probability = probabilities[0]
 
@@ -41,13 +47,12 @@ class RandomGen(object):
         if not abs(self._cumulative_sums[-1] - 1) < 1e-6:
             raise ValueError("Probabilities must sum to 1")
 
-        # TODO: Think of a cleaner way to do this
         # If the smallest probability is very small, use only binary search -
-        # caching will get too memory intensive 
+        # caching will get too memory intensive
         if self._max_decimal_places > 10:
-            self.next_num = self._binary_next
+            self._number_generator = self._binary_next
         else:
-            self.next_num = self._lookup_next
+            self._number_generator = self._lookup_next
 
     def _binary_next(self, number_to_find: Optional[float] = None) -> int:
         """
@@ -111,4 +116,6 @@ class RandomGen(object):
         When this method is called multiple times over a long period, it should return the numbers roughly with
         the initialized probabilities.
         """
-        pass
+        assert self._number_generator is not None
+        # Selected the number generator based on the maximum decimal places
+        return self._number_generator()
