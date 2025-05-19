@@ -3,12 +3,11 @@
 Python implementation of a weighted random number generator that returns values based on user-defined probabilities.
 
 
-## 📦 Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Repository
 
 ```bash
-# TODO: UPDATE
 git clone https://github.com/vladi2703/RandomGen.git
 cd RandomGen 
 ```
@@ -28,7 +27,7 @@ pip install -r requirements.txt
 ```
 
 
-## ✅ Running the Tests
+## Running the Tests
 
 This project uses `pytest` for unit and statistical testing.
 
@@ -42,7 +41,7 @@ Tests include:
 * `test_chi_square.py`: Statistical tests to verify probability distribution over large samples
 
 
-## 🔧 Usage
+## Usage
 
 ```python
 from random_gen import RandomGen
@@ -57,7 +56,7 @@ print(gen.next_num())
 The generator will return values roughly in line with the specified probabilities over time.
 
 
-## 🧠 How It Works
+## How It Works
 
 * Computes a **cumulative distribution** of the input probabilities
 * Uses **binary search** or a **lookup cache** depending on precision needs
