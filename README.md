@@ -60,3 +60,6 @@ The generator will return values roughly in line with the specified probabilitie
 
 * Computes a **cumulative distribution** of the input probabilities
 * Uses **binary search** or a **lookup cache** depending on precision needs
+
+## Simple performance comparison
+![Performance comparison between binary search and lookup table methods](./docs/images/performance-comparison.png)

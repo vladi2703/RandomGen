@@ -115,7 +115,3 @@ class TestRandomGen(unittest.TestCase):
             expected_counts,
             f"Expected counts: {expected_counts}, but got: {observed_counts}",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

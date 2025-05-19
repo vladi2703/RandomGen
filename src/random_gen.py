@@ -40,8 +40,6 @@ class RandomGen(object):
         ):
             raise ValueError("Invalid set of numbers")
 
-        minimal_probability = probabilities[0]
-
         self._random_nums = random_nums
         self._probabilities = probabilities
 
@@ -50,21 +48,37 @@ class RandomGen(object):
         self._cumulative_sums[0] = probabilities[0]
 
         for i in range(1, len(probabilities)):
-            minimal_probability = min(minimal_probability, probabilities[i])
             self._cumulative_sums[i] = self._cumulative_sums[i - 1] + probabilities[i]
             self._max_decimal_places = max(
                 self._max_decimal_places,
                 RandomGen._get_decimal_places(probabilities[i]),
             )
         if not math.isclose(self._cumulative_sums[-1], 1, rel_tol=1e-9):
-            raise ValueError("Probabilities must sum to 1")
+            raise ValueError(
+                f"Probabilities must sum to 1, got {self._cumulative_sums[-1]}"
+            )
 
         # If the maximum decimal places exceed 10, binary search is used to avoid excessive memory usage
         # in the lookup table. This threshold can be adjusted based on performance requirements.
-        if self._max_decimal_places > 10:
+        if self._max_decimal_places >= 10:
             self._number_generator = self._binary_next
         else:
             self._number_generator = self._lookup_next
+
+    def _linear_search(self, number_to_find: Optional[float] = None) -> int:
+        """
+        Returns a random number based on the initialized probabilities using linear search.
+        :param number_to_find: A number to find in the cumulative sums.
+        """
+        if number_to_find:
+            rand_num = number_to_find
+        else:
+            rand_num = random.random()
+
+        for i, cum_sum in enumerate(self._cumulative_sums):
+            if cum_sum >= rand_num:
+                return self._random_nums[i]
+        return self._random_nums[-1]
 
     def _binary_next(self, number_to_find: Optional[float] = None) -> int:
         """
