@@ -4,16 +4,6 @@ from typing import List, Optional
 
 
 class RandomGen(object):
-    # Values that may be returned by next_num()
-    _random_nums = []
-    # Probability of the occurrence of random_nums
-    _probabilities = []
-
-    _cumulative_sums = []
-    _lookup_table = {}
-    _max_decimal_places = 0
-    _number_generator = None
-
     def __init__(self, random_nums: List[int], probabilities: List[float]):
         """
         Initializes the random generator with the given random numbers and their probabilities.
@@ -40,12 +30,15 @@ class RandomGen(object):
         ):
             raise ValueError("Invalid set of numbers")
 
+        # Values that may be returned by next_num()
         self._random_nums = random_nums
+        # Probability of the occurrence of random_nums
         self._probabilities = probabilities
 
         self._lookup_table = {}
         self._cumulative_sums = [0] * len(probabilities)
         self._cumulative_sums[0] = probabilities[0]
+        self._max_decimal_places = 0
 
         for i in range(1, len(probabilities)):
             self._cumulative_sums[i] = self._cumulative_sums[i - 1] + probabilities[i]
