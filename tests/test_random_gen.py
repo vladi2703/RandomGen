@@ -28,11 +28,23 @@ class TestRandomGen(unittest.TestCase):
         with self.assertRaises(ValueError, msg="Probabilities must be between 0 and 1"):
             RandomGen([1, 2], [0.5, 1.5])
 
+        with self.assertRaises(ValueError, msg="Probabilities must be between 0 and 1"):
+            RandomGen([-1, 0.5, 0.5, 0.5, 0.5], [0.5, 1.5, 0.6, 1.9, 1.1])
+
         with self.assertRaises(ValueError, msg="Probabilities must sum to 1"):
             RandomGen([1, 2, 3], [0.3, 0.3, 0.3])
 
         with self.assertRaises(ValueError, msg="Probabilities should not be empty"):
             RandomGen([], [])
+
+        with self.assertRaises(ValueError, msg="Probabilities should not be None"):
+            RandomGen([1, 2], None)
+
+        with self.assertRaises(ValueError, msg="Invalid set of numbers"):
+            RandomGen([1, "some"], [0.5, 0.5])
+
+        with self.assertRaises(ValueError, msg="Invalid set of probabilities"):
+            RandomGen([0.5, 0.5], [1, "some"])
 
     def test_only_binary_next(self):
         possible_values = [1, 2]

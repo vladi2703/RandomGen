@@ -1,4 +1,5 @@
 import random
+import math
 from typing import List, Optional
 
 
@@ -24,8 +25,21 @@ class RandomGen(object):
             or if any probability is not between 0 and 1,
             or if the probabilities do not sum to 1.
         """
+        if not probabilities or not random_nums:
+            raise ValueError("Probabilities and random_nums should not be None")
+
         if len(random_nums) != len(probabilities) or len(random_nums) <= 0:
             raise ValueError("random_nums and probabilities must have the same length")
+
+        if not all(isinstance(num, (int, float)) for num in random_nums):
+            raise ValueError("Invalid set of numbers")
+
+        if not all(
+            isinstance(proba, (int, float)) and 0 <= proba <= 1
+            for proba in probabilities
+        ):
+            raise ValueError("Invalid set of numbers")
+
         minimal_probability = probabilities[0]
 
         self._random_nums = random_nums
@@ -34,21 +48,19 @@ class RandomGen(object):
         self._lookup_table = {}
         self._cumulative_sums = [0] * len(probabilities)
         self._cumulative_sums[0] = probabilities[0]
-        for i in range(1, len(probabilities)):
-            if not 0 <= probabilities[i] <= 1:
-                raise ValueError("Probabilities must be between 0 and 1")
 
+        for i in range(1, len(probabilities)):
             minimal_probability = min(minimal_probability, probabilities[i])
             self._cumulative_sums[i] = self._cumulative_sums[i - 1] + probabilities[i]
             self._max_decimal_places = max(
                 self._max_decimal_places,
                 RandomGen._get_decimal_places(probabilities[i]),
             )
-        if not abs(self._cumulative_sums[-1] - 1) < 1e-6:
+        if not math.isclose(self._cumulative_sums[-1], 1, rel_tol=1e-9):
             raise ValueError("Probabilities must sum to 1")
 
-        # If the smallest probability is very small, use only binary search -
-        # caching will get too memory intensive
+        # If the maximum decimal places exceed 10, binary search is used to avoid excessive memory usage
+        # in the lookup table. This threshold can be adjusted based on performance requirements.
         if self._max_decimal_places > 10:
             self._number_generator = self._binary_next
         else:
@@ -91,6 +103,7 @@ class RandomGen(object):
             self._lookup_table[rand_key] = res
             return res
 
+    @staticmethod
     def _get_decimal_places(num: float) -> int:
         """
         Returns the number of decimal places in a float.
@@ -117,5 +130,4 @@ class RandomGen(object):
         the initialized probabilities.
         """
         assert self._number_generator is not None
-        # Selected the number generator based on the maximum decimal places
         return self._number_generator()
